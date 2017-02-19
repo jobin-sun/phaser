@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <title>game</title>
+  <style type="text/css" media="screen">
+    body{
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+<script src="node_modules/phaser/build/phaser.min.js"></script>
+<script>
+    var config = {
+        width: 375,
+        height: 667
+    }
+    var game
+    var spriteList = []
+    function initGame(){
+        game = new Phaser.Game(config.width, config.height, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+    }
+    initGame()
+    
+
+    function preload () {
+        for(var i = 0; i < spriteList.length; i++){
+            game.load.image(spriteList[i].name, spriteList[i].url);
+        }
+    }
+
+    function create () {
+        console.log("create")
+        for(var i = 0; i < spriteList.length; i++){
+            var ob = spriteList[i]
+            ob.sprite = game.add.sprite(ob.position.x, ob.position.y, ob.name);
+            ob.sprite.anchor.setTo(ob.anchor.x, ob.anchor.y)
+        }
+    }
+    function update(){
+        console.log(spriteList[i])
+        for(var i = 0; i < spriteList.length; i++){
+            console.log(spriteList[i])
+            if(typeof spriteList[i].update === 'function'){
+
+                spriteList[i].update()
+            }
+        }
+        //console.log("update")
+        //logo.angle += 1
+        //console.log(logo.angle)
+    }
+    function reset(code){
+        game.destroy()
+        spriteList = []
+        spriteList.push({
+            name: 'logo',
+            url: 'static/sprites.png',
+            position: {
+                x: config.width/2,
+                y: config.height/2
+            },
+            anchor: {
+                x: 0.5,
+                y: 0.5
+            },
+            update: function(){
+                this.sprite.angle += 1
+            }
+        })
+        initGame()
+    }
+
+</script>
+</body>
+</html>
+
