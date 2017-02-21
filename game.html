@@ -35,7 +35,7 @@
         console.log("create")
         for(var i = 0; i < spriteList.length; i++){
             var ob = spriteList[i]
-            ob.sprite = game.add.sprite(ob.position.x, ob.position.y, ob.name);
+            ob.sprite = game.add.sprite(ob.position.x, ob.position.y, ob.name)
             ob.sprite.anchor.setTo(ob.anchor.x, ob.anchor.y)
         }
     }
