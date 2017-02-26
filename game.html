@@ -23,26 +23,46 @@
         game = new Phaser.Game(config.width, config.height, Phaser.AUTO, '', { preload: preload, create: create, update: update });
     }
     initGame()
-    
 
     function preload () {
         for(var i = 0; i < spriteList.length; i++){
             game.load.image(spriteList[i].name, spriteList[i].url);
         }
+
     }
 
     function create () {
-        console.log("create")
+        game.load.onLoadStart.add(loadStart, this);
+        game.load.onFileComplete.add(fileComplete, this);
+        game.load.onLoadComplete.add(loadComplete, this);
         for(var i = 0; i < spriteList.length; i++){
             var ob = spriteList[i]
             ob.sprite = game.add.sprite(ob.position.x, ob.position.y, ob.name)
             ob.sprite.anchor.setTo(ob.anchor.x, ob.anchor.y)
         }
+    game.load.image('picture1', 'static/sprites.png');
+    game.load.image('picture2', 'static/sprites.png');
+    game.load.image('picture3', 'static/sprites.png');
+    game.load.image('picture4', 'static/sprites.png');
+    game.load.image('picture5', 'static/sprites.png');
+    game.load.image('picture6', 'static/sprites.png');
+    game.load.image('picture7', 'static/sprites.png');
+        game.load.start();
+    }
+    function loadStart() {
+        console.log("loadStart")
+    }
+
+    //  This callback is sent the following parameters:
+    function fileComplete(progress, cacheKey, success, totalLoaded, totalFiles) {
+        console.log(progress, cacheKey, success, totalLoaded, totalFiles)
+    }
+
+    function loadComplete() {
+        console.log('loadComplete')
     }
     function update(){
-        console.log(spriteList[i])
         for(var i = 0; i < spriteList.length; i++){
-            console.log(spriteList[i])
             if(typeof spriteList[i].update === 'function'){
 
                 spriteList[i].update()

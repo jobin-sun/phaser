@@ -4,15 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
   <title>test</title>
+  <style type="text/css" media="screen">
+  	.optBtn{
+  		width: 5em;
+  		display: block;
+  		margin: 5px 0;
+  	}
+  </style>
 </head>
 <body>
 
-<div id="blocklyDiv" style="height: 480px; width: 100%"></div>
+<div id="blocklyDiv" style="height: 480px; width: 500px; float: left"></div>
+<div style='float: left'>
+	<div style="float: left; padding-left: 1em; padding-right: 1em;">
+		<button class="optBtn" type="button" onclick="runCode()">运行</button>
+		<button class="optBtn" type="button" onclick="runCode()">保存</button>
+		<button class="optBtn" type="button" onclick="runCode()">分享</button>
+	</div>
+	<div id='gameContainer' style="width: 375px; height: 667px; float: left"></div>
 
-<p>
-	<button type="button" onclick="runCode()">运行</button>	
-</p>
-<iframe src="game.html" id='game' style="width: 375px; height: 667px;"></iframe>
+	<div style="clear: both">
+		
+	</div>
+</div>
+<!--iframe src="game.html" id='game' style="width: 375px; height: 667px; clear: both"></iframe-->
 
 <xml id="toolbox" style="display: none">
   <category name="语法">
@@ -318,6 +333,7 @@
 <script src="src/blocks_compressed.js"></script>
 <script src="src/msg/js/zh-hans.js"></script>
 <script src="src/blocks/object.js"></script>
+<script src="node_modules/phaser/build/phaser.min.js"></script>
 
 
 <script>
@@ -335,10 +351,156 @@
   });
   function runCode(){
   	var code = Blockly.JavaScript.workspaceToCode(workspace);
-  	console.log(code)
-  	document.getElementById("game").contentWindow.reset(code)
+  	console.log(code);
+  	(function(){
+  		"use strict";
+  		eval(document.querySelector("#gameTpl").innerHTML)
+  	})()
+  	//document.getElementById("game").contentWindow.reset(code)
   }
   
+</script>
+
+<script id="gameTpl" type = "text/template">
+	if(window.game){
+		window.game.destroy()
+	}
+	var config = {
+        width: 375,
+        height: 667
+    }
+    var game = new Phaser.Game(config.width, config.height, Phaser.AUTO, 'gameContainer');
+    window.game = game
+    var progressText
+    var state = {
+	    	boot:{
+		    	preload: function(){
+		    		game.load.image('loading', 'static/loading.gif')
+		    	},
+		    	create: function(){
+		    		game.state.start('loader')
+		    	}
+		    },
+		    loader: {
+		    	init: function(){
+		    		var sprite = game.add.image(game.world.centerX, game.world.centerY - 20, 'loading')
+		    		sprite.anchor = {x: 0.5, y: 0.5}
+		    		sprite.width /= 2
+		    		sprite.height /= 2
+		    		progressText = game.add.text(game.world.centerX, game.world.centerY + 30, '0%', { fill: '#fff', fontSize: '16px'})
+		    		progressText.anchor = { x: 0.5, y: 0.5}
+		    	},
+		    	preload: function(){
+				    game.load.image('plane', 'static/plane.png')
+				    game.load.image('bg', 'static/gamebackdrop.gif')
+				    game.load.onFileComplete.add(function(progress){
+				    	progressText.text = progress + '%'
+				    })
+		    	},
+		    	create: function(){
+		    		game.state.start('game')
+		    	}
+		    },
+		    game: {
+		    	preload: function(){
+				    console.log('game preload')
+		    	},
+		    	create: function(){
+		            var bg = game.add.image(0, 0, 'bg')
+		            bg.width = game.world.width
+		            bg.height = game.world.height
+		            var plane = game.add.image(game.world.centerX, game.world.height - 40, 'plane')
+		    		plane.anchor = {x: 0.5, y: 0.5}
+		    		plane.update = function(){
+		    			if(game.input.mousePointer.isDown || game.input.pointer1.isDown){
+		    				console.log(game.input.position)
+		    				this.x = game.input.position.x
+		    				//this.y = game.input.position.y
+		    				//this.angle += 1
+		    			}
+		                
+		            }
+		    	},
+		    	update: function(){
+		    		//console.log('game update')
+		    	}
+		    }
+	    }
+    game.state.add('boot', state.boot)
+    game.state.add('loader', state.loader)
+    game.state.add('game', state.game)
+    game.state.start('boot')
+    
+
+    function preload () {
+        for(var i = 0; i < spriteList.length; i++){
+            game.load.image(spriteList[i].name, spriteList[i].url);
+        }
+
+    }
+
+    function create () {
+        game.load.onLoadStart.add(loadStart, this);
+        game.load.onFileComplete.add(fileComplete, this);
+        game.load.onLoadComplete.add(loadComplete, this);
+        for(var i = 0; i < spriteList.length; i++){
+            var ob = spriteList[i]
+            ob.sprite = game.add.sprite(ob.position.x, ob.position.y, ob.name);
+            ob.sprite.anchor.setTo(ob.anchor.x, ob.anchor.y)
+        }
+	    game.load.image('picture1', 'static/sprites.png');
+	    game.load.image('picture2', 'static/sprites.png');
+	    game.load.image('picture3', 'static/sprites.png');
+	    game.load.image('picture4', 'static/sprites.png');
+	    game.load.image('picture5', 'static/sprites.png');
+	    game.load.image('picture6', 'static/sprites.png');
+	    game.load.image('picture7', 'static/sprites.png');
+        game.load.start();
+    }
+    function loadStart() {
+        console.log("loadStart")
+    }
+
+    //  This callback is sent the following parameters:
+    function fileComplete(progress, cacheKey, success, totalLoaded, totalFiles) {
+        console.log(progress, cacheKey, success, totalLoaded, totalFiles)
+    }
+
+    function loadComplete() {
+        console.log('loadComplete')
+    }
+    function update(){
+    	console.log(3333)
+        for(var i = 0; i < spriteList.length; i++){
+            if(typeof spriteList[i].update === 'function'){
+
+                spriteList[i].update()
+            }
+        }
+        //console.log("update")
+        //logo.angle += 1
+        //console.log(logo.angle)
+    }
+    function reset(code){
+        game.destroy()
+        spriteList = []
+        spriteList.push({
+            name: 'logo',
+            url: 'static/sprites.png',
+            position: {
+                x: config.width/2,
+                y: config.height/2
+            },
+            anchor: {
+                x: 0.5,
+                y: 0.5
+            },
+            update: function(){
+                this.sprite.angle += 1
+            }
+        })
+        initGame()
+    }
 </script>
 
 
