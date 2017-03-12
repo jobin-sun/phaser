@@ -10,11 +10,28 @@
   		display: block;
   		margin: 5px 0;
   	}
+    .sprite_item{
+        max-width: 4em;
+        max-height: 4em;
+        margin: 1em;
+    }
+    .sprite_item.active{
+        border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
 
-<div id="blocklyDiv" style="height: 480px; width: 500px; float: left"></div>
+<div style="float: left">
+    <div id="blocklyDiv" style="height: 480px; width: 500px;"></div>
+    <div>
+        <button type="button" id='addSprite'>添加</button>
+        <div id='spriteCtn'>
+            
+        </div>
+    </div>
+    <div class="clear: both;"></div>
+</div>
 <div style='float: left'>
 	<div style="float: left; padding-left: 1em; padding-right: 1em;">
 		<button class="optBtn" type="button" onclick="runCode()">运行</button>
@@ -350,13 +367,67 @@
      	trashcan: true
   });
   function runCode(){
-  	var code = Blockly.JavaScript.workspaceToCode(workspace);
-  	console.log(code);
-  	(function(){
+    var activeItem = document.querySelector(".sprite_item.active")
+    if(activeItem){
+        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var currentCode = Blockly.JavaScript.workspaceToCode(workspace);
+        activeItem.xml = xml
+        activeItem.code = currentCode
+    }
+    var itemList = document.querySelectorAll(".sprite_item")
+    var code = 'var spriteList = [];'
+    console.log(code)
+    for(var key = 0; key < itemList.length; key++){
+        console.log(key)
+        var ob = itemList[key]
+        code += 'spriteList.push({\
+            id: "sprite_'+ key +'",\
+            src: "'+ ob.src +'",\
+            toDo: function(sprite){'+
+                ob.code
+            +'}\
+        });'
+    }
+    console.log(itemList)
+    console.log(code)
+  	;(function(){
   		"use strict";
-  		eval(document.querySelector("#gameTpl").innerHTML)
+  		eval(code + document.querySelector("#gameTpl").innerHTML)
   	})()
   	//document.getElementById("game").contentWindow.reset(code)
+  }
+  function clickSprite(){
+    var activeItem = document.querySelector(".sprite_item.active")
+    if(activeItem){
+        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var code = Blockly.JavaScript.workspaceToCode(workspace);
+        activeItem.xml = xml
+        activeItem.code = code
+        activeItem.classList.remove("active")
+        
+    }
+    workspace.clear()
+    this.classList.add("active")
+    if(this.xml){
+        Blockly.Xml.domToWorkspace(this.xml, workspace);
+    }
+  }
+  document.querySelector("#addSprite").onclick = function(){
+    var src = prompt('输入图片地址：', 'http://');
+    var newSprite = document.createElement("img");
+    newSprite.src = src
+    newSprite.className = 'sprite_item active'
+    newSprite.onclick = clickSprite
+    var activeItem = document.querySelector(".sprite_item.active")
+    if(activeItem){
+        var xml = Blockly.Xml.workspaceToDom(workspace);
+        var code = Blockly.JavaScript.workspaceToCode(workspace);
+        activeItem.xml = xml
+        activeItem.code = code
+        activeItem.classList.remove("active")
+    }
+    workspace.clear()
+    document.querySelector("#spriteCtn").appendChild(newSprite)
   }
   
 </script>
@@ -391,8 +462,10 @@
 		    		progressText.anchor = { x: 0.5, y: 0.5}
 		    	},
 		    	preload: function(){
-				    game.load.image('plane', 'static/plane.png')
-				    game.load.image('bg', 'static/gamebackdrop.gif')
+                    for(var key in spriteList){
+                        var ob = spriteList[key]
+                        game.load.image(ob.id, ob.src)
+                    }
 				    game.load.onFileComplete.add(function(progress){
 				    	progressText.text = progress + '%'
 				    })
@@ -406,20 +479,11 @@
 				    console.log('game preload')
 		    	},
 		    	create: function(){
-		            var bg = game.add.image(0, 0, 'bg')
-		            bg.width = game.world.width
-		            bg.height = game.world.height
-		            var plane = game.add.image(game.world.centerX, game.world.height - 40, 'plane')
-		    		plane.anchor = {x: 0.5, y: 0.5}
-		    		plane.update = function(){
-		    			if(game.input.mousePointer.isDown || game.input.pointer1.isDown){
-		    				console.log(game.input.position)
-		    				this.x = game.input.position.x
-		    				//this.y = game.input.position.y
-		    				//this.angle += 1
-		    			}
-		                
-		            }
+                    for(var key in spriteList){
+                        var ob = spriteList[key]
+                        var sprite = game.add.image(0, 0, ob.id)
+                        ob.toDo(sprite)
+                    }
 		    	},
 		    	update: function(){
 		    		//console.log('game update')
@@ -480,26 +544,6 @@
         //console.log("update")
         //logo.angle += 1
         //console.log(logo.angle)
-    }
-    function reset(code){
-        game.destroy()
-        spriteList = []
-        spriteList.push({
-            name: 'logo',
-            url: 'static/sprites.png',
-            position: {
-                x: config.width/2,
-                y: config.height/2
-            },
-            anchor: {
-                x: 0.5,
-                y: 0.5
-            },
-            update: function(){
-                this.sprite.angle += 1
-            }
-        })
-        initGame()
     }
 </script>
 
